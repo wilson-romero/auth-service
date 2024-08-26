@@ -1,12 +1,11 @@
-version: '3.8'
 services:
   postgres:
     image: postgres:latest
-    container_name: postgres
+    container_name: postgres_auth_service
     environment:
       - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=insecure-password
-      - POSTGRES_DB=users
+      - POSTGRES_PASSWORD=your_password
+      - POSTGRES_DB=authorization-db
     ports:
       - "5433:5432"
     volumes:
