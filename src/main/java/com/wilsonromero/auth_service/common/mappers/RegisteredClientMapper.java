@@ -9,8 +9,9 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.stereotype.Component;
 
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 public class RegisteredClientMapper {
@@ -21,14 +22,18 @@ public class RegisteredClientMapper {
         this.encryptionService = encryptionService;
     }
 
+    // Convierte de RegisteredClientEntity a RegisteredClient (Entidad a Modelo)
     public RegisteredClient toRegisteredClient(RegisteredClientEntity entity) {
         return RegisteredClient.withId(entity.getId().toString())
                 .clientId(entity.getClientId())
                 .clientSecret(entity.getClientSecret())
                 .scopes(scopes -> {
-                    String entityScopes = entity.getScopes();
+                    List<String> entityScopes = entity.getScopes();
                     if (entityScopes != null && !entityScopes.isEmpty()) {
-                        scopes.addAll(Set.of(entityScopes.split(",")));
+                        // Convierte la lista de scopes en un Set<String>
+                        scopes.addAll(entityScopes.stream()
+                                .map(String::trim)
+                                .collect(Collectors.toSet()));
                     }
                 })
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT)
@@ -38,12 +43,14 @@ public class RegisteredClientMapper {
                 .build();
     }
 
+    // Convierte de RegisteredClient a RegisteredClientEntity (Modelo a Entidad)
     public RegisteredClientEntity toRegisteredClientEntity(RegisteredClient registeredClient) {
         return RegisteredClientEntity.builder()
                 .id(UUID.fromString(registeredClient.getId()))
                 .clientId(registeredClient.getClientId())
+                // Usa encryptionService para encriptar el clientSecret
                 .clientSecret(encryptionService.encrypt(registeredClient.getClientSecret()))
-                .scopes(String.join(",", registeredClient.getScopes()))
+                .scopes(registeredClient.getScopes().stream().toList())
                 .build();
     }
 }
